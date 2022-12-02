@@ -6,18 +6,18 @@ import copy
 
 class sircular_cylindric_fs():
     def __init__( self, model, n_lamelle=30 ):
+        self.def_incr = 5 # default increments for grid search
         self.model = model
         self.n_lamelle = n_lamelle
         self.fs_manager = sircular_cylindric_fs.failure_surface_manager()
 
-    def sort( self ):
-        self.fs_manager.sort()
+    def sort( self, grid ):
+        self.fs_manager.sort( grid )
 
     def print_geom( self ):
         for fs_key in self.fs_manager.fs:
             fs = self.fs_manager.fs[fs_key]
-            lamellas = fs["lamellas"].lamellas
-            for lamella in lamellas:
+            for lamella in fs['lamellas'].lamellas:
                 coords = ''
                 coords += str(lamella.x1_4) + ", " + str(lamella.y1)
                 coords += ", " + str(lamella.x2_3) + ", " + str(lamella.y2)
@@ -48,24 +48,18 @@ class sircular_cylindric_fs():
         if clear_FS:
             self.fs_manager.clear_fs()
 
-        # set grid
-        if search_field: # implement search box
-            x_from = search_field[ 'x_from' ]
-            y_from = search_field[ 'y_from' ]
-            x_to = search_field[ 'x_to' ]
-            y_to = search_field[ 'y_to' ]
-            upper_tangent = search_field[ 'upper_tangent' ]
-            lower_tangent = search_field[ 'lower_tangent' ]
+        # set grid        
+        x_from = search_field[ 'x_from' ] if search_field else 0
+        y_from = search_field[ 'y_from' ] if search_field else 10
+        x_to = search_field[ 'x_to' ] if search_field else 10
+        y_to = search_field[ 'y_to' ] if search_field else 20
+        upper_tangent = search_field[ 'upper_tangent' ] if search_field else 0
+        lower_tangent = search_field[ 'lower_tangent' ] if search_field else -10
 
         # set increments
-        if increments:
-            n_x = increments[ 'n_x' ]
-            n_y = increments[ 'n_y' ]
-            n_r = increments[ 'n_r' ]
-        
-        n_x = max( n_x, 2 )
-        n_y = max( n_y, 2 )
-        n_r = max( n_r, 2 )
+        n_x = max( increments[ 'n_x' ], 2 ) if increments else self.def_incr
+        n_y = max( increments[ 'n_y' ], 2 ) if increments else self.def_incr
+        n_r = max( increments[ 'n_r' ], 2 ) if increments else self.def_incr
 
         x_incr = (x_to-x_from) / (n_x-1)
         y_incr = (y_to-y_from) / (n_y-1)
@@ -96,7 +90,7 @@ class sircular_cylindric_fs():
             'y': [ y_from, y_from, y_to, y_to, y_from ]
         }
 
-        self.fs_manager.sort( grid )
+        self.sort( grid )
 
     def calc_single_circle( self, x_center, y_center, radius, clear_FS=True ):
         if clear_FS:
@@ -242,6 +236,7 @@ class sircular_cylindric_fs():
     def add_intermediate_points( self, raw_fs_es ):
         tmp_fs = copy.deepcopy(raw_fs_es)
         for i in range( len(tmp_fs) ): # failure surface
+            tmp_x_list = []
             for j in range(len(tmp_fs[i])): # layer
                 layer_x_vals = self.model.layers[ tmp_fs[i][j][0] ].x
 

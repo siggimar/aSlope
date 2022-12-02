@@ -57,17 +57,16 @@ class SOIL_MODEL():
             y_cen_layer = self.layers[i].y_from_x( x_cen )
             if  y_cen_layer < y_cen:
                 return (i-1)
-        
-        return i
+        return len(self.layers)-1
 
 
-    def sort_layers():
+    def sort_layers( self ):
         # implement later
         pass
 
 
     class LAYER():
-        def __init__( self, x=[], y=[], gamma=20, a=0, phi=0, cu=0, undrained=True, color_index=0 ):
+        def __init__( self, x=[], y=[], gamma=20.0, a=0.0, phi=0.0, cu=0.0, undrained=True, color_index=0 ):
             self.x = x
             self.y = y
 
@@ -94,7 +93,7 @@ class SOIL_MODEL():
             for i in range(len(self.x)-1):
                 if self.x[i]<=x and self.x[i+1]>=x:
                     return i
-            return i
+            return (len(self.x)-1)
 
         def sort_coords( self ): # ensure coords are left to right
             pass

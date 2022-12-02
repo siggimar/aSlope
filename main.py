@@ -8,9 +8,10 @@ Some TODO-s
     # implent varying Su with depth
     # implement ADP
     # fix issues when shear surface hits model boundaries
+    # fix issues regarding inclomplete models (extend layers to boundaries)
     # fix geometric issue when circle center is below top of slope
     # ...the list goes on
-    
+
 '''
 
 from model import SOIL_MODEL as M
@@ -56,7 +57,8 @@ def main():
     # grid search
     elif True:
         model.simple_geom( H=10, L=20, D_ROCK=10, gamma=19, a=10, phi=29, cu=32, undrained=True )
-        
+        #model.set_gw( [50.0,0,2.5,7.5,12.5,17.5,23,28,30.3490,70],[0,0,0.2474,0.6829,1.0396,1.3177,1.5331,1.6468,1.6733,1.7433] ) # fails
+
         box = { # box, and lowest point bounds
             'x_from': -1,
             'y_from': 11,
