@@ -1,13 +1,15 @@
 import matplotlib.pyplot as plt
 import matplotlib.colors
 from numpy import tanh, arctanh
-
+import scipy.interpolate
+import numpy as np
 
 class MODEL_RENDERER():
     def __init__( self, MODEL, STABILITY ) -> None:
         self.colors = {            
             "shear_surface": ( 1, 0, 0 ),
             "background": ( 0.7, 0.7, 0.7 ),
+            "contours": ( 0, 0, 0 ),
             "lamellas": ( 0.7, 0.7, 0.7),
             "rock_surface": ( 0.6, 0, 0),
             "gw": (0/255,142/255,194/255), # blue (NPRA)
@@ -29,12 +31,21 @@ class MODEL_RENDERER():
         self.lw = {
             "shear_surface": 1,
             "lamellas": 0.1,
+            "grid-search": .1,
+            "contours": .5
         }
 
         self.fs_bounds = {
             'low': 1,
             'high': 1.4
         }
+
+        n_contour_interval = (self.fs_bounds['high']-self.fs_bounds['low'])
+        n_contour_ints = int( n_contour_interval*10 + 1 )
+        n_contour_increment = n_contour_interval / n_contour_ints
+
+
+        self.contour_ints = [self.fs_bounds['low'] + i*n_contour_increment for i in range(n_contour_ints+1)]
 
         self.center_map = {}
 
@@ -43,7 +54,7 @@ class MODEL_RENDERER():
 
 
     def render( self ):
-        figure, ax = plt.subplots( figsize=(10,15) )
+        figure, ax = plt.subplots( figsize=(10,6) )
 
         if self.model.GW:
             ax.plot( self.model.GW.x, self.model.GW.y, c=self.colors["gw"] )
@@ -63,7 +74,7 @@ class MODEL_RENDERER():
                 fs = self.fs.fs_manager.fs[ key ]
                 F = fs['safety']
                 c = cmap( self.calc_c_val( F ) ) 
-                self.plot_fs( ax, fs, color=c, lw=.1, zorder=n_circles-self.fs.fs_manager.score_id[key] )
+                self.plot_fs( ax, fs, color=c, lw=self.lw['grid-search'], zorder=n_circles-self.fs.fs_manager.score_id[key] )
 
                 # build center map
                 cen_key = tuple( list(key[0:2]) )
@@ -72,15 +83,32 @@ class MODEL_RENDERER():
                         self.center_map[ cen_key ] = [F, c]
                 else:
                     self.center_map[ cen_key ] = [F, c]
-                    
-            
+
+
+            # build center map
+            x_cen = []
+            y_cen = []
+            f_cen = []
             for key in self.center_map:
                 x, y = list(key)
-                ax.scatter( x, y, c=self.center_map[key][1] )
+                x_cen.append(x)
+                y_cen.append(y)
+                f_cen.append( self.center_map[key][0] )
 
-            a=1
+            n_int = 200
+            xi, yi = np.linspace( min(x_cen), max(x_cen), n_int), np.linspace(min(y_cen), max(y_cen), n_int)
+            xi, yi = np.meshgrid(xi, yi)
 
-            #scores = self.fs.fs_manager.score
+            rbf = scipy.interpolate.Rbf( x_cen, y_cen, f_cen, function='linear' )
+            fi = rbf(xi, yi)
+            cen_map = ax.pcolormesh( xi, yi, fi, cmap=cmap )
+            
+            contour_ls = 'dashed'
+            c_plt = ax.contour( xi, yi, fi, self.contour_ints, linestyles=[contour_ls], linewidths=[self.lw['contours']], colors=[self.colors['contours']] )
+            cb = plt.colorbar( cen_map ) # draw legend
+            for some_interval in self.contour_ints: # draw contours on legend
+                cb.ax.plot( [0,1], [some_interval]*2, ls=contour_ls, lw=self.lw['contours'], c=self.colors['contours'] )
+
 
             key = min(self.fs.fs_manager.score_id, key=self.fs.fs_manager.score_id.get)
             fs = self.fs.fs_manager.fs[ key ]
@@ -94,9 +122,10 @@ class MODEL_RENDERER():
 
 
         else:
+            plt_lamellas = True if len(self.fs.fs_manager.fs) == 1 else False
             for key in self.fs.fs_manager.fs:
                 fs = self.fs.fs_manager.fs[key]
-                self.plot_fs( ax, fs, annotate=True, lamellas=True )
+                self.plot_fs( ax, fs, annotate=True, lamellas=plt_lamellas )
 
         ax.axis('equal')
         #ax.grid()
