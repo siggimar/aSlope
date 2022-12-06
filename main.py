@@ -42,7 +42,7 @@ def main():
         fs.calc_single_circle( 11.57, 10.43, 20.43, clear_FS=False ) # 1b: 1.060/1.059 - OK
 
     # drained, 2 sircles not critical
-    elif False: # FØ2 BYGT2001:2022 U43 - deep circles
+    elif False: # FØ2 BYGT2001:2022 U43 - deep circles - GW as in example
         model.simple_geom( H=10, L=20, D_ROCK=10, gamma=19, a=10, phi=29, cu=32, undrained=False )
         model.set_gw( [-12.1576,0,2.5,7.5,12.5,17.5,23,28,30.3490,39.5625],[0,0,0.2474,0.6829,1.0396,1.3177,1.5331,1.6468,1.6733,1.7433] )
         fs.calc_single_circle( 9.03, 20.09, 25.09 ) # 1a: 1.958/1.957 - OK
