@@ -31,7 +31,7 @@ class MODEL_RENDERER():
         self.lw = {
             "shear_surface": 1,
             "lamellas": 0.1,
-            "grid-search": .1,
+            "grid-search": .05,
             "contours": .5
         }
 

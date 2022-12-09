@@ -11,18 +11,20 @@ class sircular_cylindric_fs():
         self.n_lamelle = n_lamelle
         self.fs_manager = sircular_cylindric_fs.failure_surface_manager()
 
+
     def sort( self, grid ):
         self.fs_manager.sort( grid )
+
 
     def print_geom( self ):
         for fs_key in self.fs_manager.fs:
             fs = self.fs_manager.fs[fs_key]
             for lamella in fs['lamellas'].lamellas:
                 coords = ''
-                coords += str(lamella.x1_4) + ", " + str(lamella.y1)
-                coords += ", " + str(lamella.x2_3) + ", " + str(lamella.y2)
-                coords += ", " + str(lamella.x2_3) + ", " + str(lamella.y3)
-                coords += ", " + str(lamella.x1_4) + ", " + str(lamella.y4)
+                coords += str( lamella.x1_4 ) + ", " + str( lamella.y1 )
+                coords += ", " + str( lamella.x2_3 ) + ", " + str( lamella.y2 )
+                coords += ", " + str( lamella.x2_3 ) + ", " + str( lamella.y3 )
+                coords += ", " + str( lamella.x1_4 ) + ", " + str( lamella.y4 )
                 print( coords )
 
 
@@ -76,10 +78,6 @@ class sircular_cylindric_fs():
                     
                     calc_list.append( [ x_center, y_center, radius ] )
 
-#        keys = []
-#        for c in calc_list:
-#            keys.append( self.fs_manager.gen_fs_key( c[0], c[1], c[2] ) )
-#        self.fs_manager.def_fs_dict( set(keys) )
 
         for i in tqdm( range( len(calc_list) ) ): # prints progression
             c=calc_list[i]
@@ -91,6 +89,7 @@ class sircular_cylindric_fs():
         }
 
         self.sort( grid )
+
 
     def calc_single_circle( self, x_center, y_center, radius, clear_FS=True ):
         if clear_FS:
@@ -202,13 +201,13 @@ class sircular_cylindric_fs():
                 x_1, y_1 = [raw_FS[i][0][1][0], raw_FS[i][0][2][0]] # startpoint FS
                 x_2, y_2 = [raw_FS[i][0][1][1], raw_FS[i][0][2][1]] # endpoint
 
-                v_1 = [ x_1-x_center, y_1-y_center ]
-                v_2 = [ x_2-x_center, y_2-y_center ]
+                v_1 = [ x_1-x_center, y_1-y_center ] # vector from center to start
+                v_2 = [ x_2-x_center, y_2-y_center ] # vector from center to end
 
-                theta_fs = self.calc_vector_angle( v_1, v_2 )
+                theta_fs = self.calc_vector_angle( v_1, v_2 ) # angle between v1 and v2
                 start_theta = arctan2( v_1[1], v_1[0] )
 
-                delta_theta = theta_fs / (n_new + 1)
+                delta_theta = theta_fs / (n_new + 1) # angle increment for new points
 
                 new_x_vals = self.calc_new_x_vals( radius, x_center, start_theta, delta_theta, n_new )
 
@@ -233,7 +232,10 @@ class sircular_cylindric_fs():
         return arccos(cos_theta)
 
 
-    def add_intermediate_points( self, raw_fs_es ):
+###############################
+# does not work like intended #
+###############################################################################################################
+    def add_intermediate_points( self, raw_fs_es ): 
         tmp_fs = copy.deepcopy(raw_fs_es)
         for i in range( len(tmp_fs) ): # failure surface
             tmp_x_list = []
@@ -255,6 +257,8 @@ class sircular_cylindric_fs():
             tmp_fs[i][j] = tmp_x_list # return x_vals
             
         return tmp_fs[0] ############ check for multiple FS
+###############################################################################################################
+
 
 
     def filter_icts( self, layer_icts, x_center, y_center, radius ):
@@ -404,8 +408,11 @@ class sircular_cylindric_fs():
 
         return ict, xr, yr
 
+
     def circle_bottom_y_from_x( self, x, x_cen, y_cen, radius ):
         return y_cen - (radius**2-(x-x_cen)**2)**0.5
+
+
 
 
     class failure_surface_manager(): # failure surface manager
@@ -444,15 +451,19 @@ class sircular_cylindric_fs():
                 "undrained": None
             }
             self.fs[ fs_key ] = fs_definition
-        
+
+
         def clear_fs( self ):
             self.fs = {}
+
 
         def gen_fs_key( self, x_cen, y_cen, radius): #:, start_x ):
                 return ( x_cen, y_cen, radius ) #, start_x )
 
+
         def get_all_fs( self ):
             return list( self.fs.values() )
+
 
         def get_critical_fs( self ):
             pass

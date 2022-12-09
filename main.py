@@ -3,6 +3,7 @@ Possible TODO-s
     # DONE - redo plotting procedure for heatmap (search zone),
         DONE - 1. take known points & use kriging/RBF to fill in unknown areas
     # separate failure surface calculations (geometry) and factor of safety calculations (geotechnics)
+    # fix bug for listing x_breakpoints when n_layers > 1
     # implement calculation method as separate classes ('OMS', 'Bishop', 'Janbu', ...)
     # implement terrain loads
     # implent varying Su with depth
@@ -18,6 +19,8 @@ Possible TODO-s
       4. grid calculations (medium grid) to rate candidates
       5. grid calculations (fine grid on best candidate)
       6. plot best results, optionally with rest faded in background
+    
+    # decide on visualization/coloring strategy for when F
 
     # ...the list goes on
 '''
@@ -33,18 +36,29 @@ def main():
     fs = FS( model, n_lamelle=30 )
     renderer = R( model, fs )
 
-
 # verification examples (results: [ from Excel ]/[ from this program ]
-    # undrained, 2 sircles not critical
+    # undrained, 2 sircles not critical    
     if False: # FØ1 BYGT2001:2022 U43, expected result from Excel with ~x_t in comments /result from here
         model.simple_geom( H=10, L=20, D_ROCK=10, gamma=19, a=10, phi=29, cu=32, undrained=True ) 
-        fs.calc_single_circle( 9.03, 20.09, 25.09) # 1a: 1.064/1.063 - OK
+        #fs.calc_single_circle( 9.03, 20.09, 25.09) # 1a: 1.064/1.063 - OK
         fs.calc_single_circle( 11.57, 10.43, 20.43, clear_FS=False ) # 1b: 1.060/1.059 - OK
+        fs.calc_single_circle( 10.02, 19.42, 29.42, clear_FS=False ) # 0.993 - critical from grid search
+
+    elif False: # same thing done manually
+        H=10
+        L=20
+        n_D = 5 # no. depths to rock in horizontal distance to model bounds
+        d_rock = 10
+        x = [-n_D*d_rock,0,L,L+n_D*d_rock] # terrain x-vals
+        y = [0,0,H,H]
+        model.add_layer( x, y, gamma=19, a=10, phi=29, cu=32, undrained=True )
+        model.set_rock( x, [ -d_rock ] * 4 )
+        fs.calc_single_circle( 10.02, 19.42, 29.42) # 0.993
 
     # drained, 2 sircles not critical
     elif False: # FØ2 BYGT2001:2022 U43 - deep circles - GW as in example
         model.simple_geom( H=10, L=20, D_ROCK=10, gamma=19, a=10, phi=29, cu=32, undrained=False )
-        model.set_gw( [-12.1576,0,2.5,7.5,12.5,17.5,23,28,30.3490,39.5625],[0,0,0.2474,0.6829,1.0396,1.3177,1.5331,1.6468,1.6733,1.7433] )
+        model.set_gw( [-12.1576,0,2.5,7.5,12.5,17.5,23,28,30.3490,39.5625,70],[0,0,0.2474,0.6829,1.0396,1.3177,1.5331,1.6468,1.6733,1.7433,1.8] )
         fs.calc_single_circle( 9.03, 20.09, 25.09 ) # 1a: 1.958/1.957 - OK
         fs.calc_single_circle( 11.57, 10.43, 20.43, clear_FS=False ) # 1b: 2.502/2.499 - OK
 
@@ -58,14 +72,15 @@ def main():
     # drained, 2 sircles not critical
     elif False: # FØ2b BYGT2001:2022 U43 - shallow circles
         model.simple_geom( H=10, L=20, D_ROCK=10, gamma=19, a=10, phi=29, cu=32, undrained=False )
-        model.set_gw( [-12.1576,0,2.5,7.5,12.5,17.5,23,28,30.3490,39.5625],[0,0,0.2474,0.6829,1.0396,1.3177,1.5331,1.6468,1.6733,1.7433] )
+        model.set_gw( [-12.1576,0,2.5,7.5,12.5,17.5,23,28,30.3490,39.5625,70],[0,0,0.2474,0.6829,1.0396,1.3177,1.5331,1.6468,1.6733,1.7433,1.8] )
         fs.calc_single_circle( 3.12, 24.27, 24.47 ) # 1a: 1.604/1.604 - OK
         fs.calc_single_circle( 6.64, 21.54, 22.54, clear_FS=False ) # 1b: 1.727/1.726 - OK
 
     # grid search
     elif True:
         model.simple_geom( H=10, L=20, D_ROCK=10, gamma=19, a=10, phi=29, cu=32, undrained=True )
-        #model.set_gw( [50.0,0,2.5,7.5,12.5,17.5,23,28,30.3490,70],[0,0,0.2474,0.6829,1.0396,1.3177,1.5331,1.6468,1.6733,1.7433] ) # fails
+        model.set_gw( [-50,-12.1576,0,2.5,7.5,12.5,17.5,23,28,30.3490,39.5625,70],[0,0,0,0.2474,0.6829,1.0396,1.3177,1.5331,1.6468,1.6733,1.7433,1.8] )
+        #model.add_layer( [-50,70], [-4,-4], gamma=19, a=10, phi=29, cu=32, undrained=False ) # fails
 
         box = { # box, and lowest point bounds
             'x_from': -1,
